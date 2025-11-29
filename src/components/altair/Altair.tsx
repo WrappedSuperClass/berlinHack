@@ -22,6 +22,7 @@ import {
   Modality,
   Type,
 } from "@google/genai";
+import { MediaClient } from "../../lib/media-client";
 
 const declaration: FunctionDeclaration = {
   name: "render_altair",
@@ -41,13 +42,17 @@ const declaration: FunctionDeclaration = {
 
 const generateVideoDeclaration: FunctionDeclaration = {
   name: "generate_video",
-  description: "Generates a video using the Veo 3.1 model based on a text prompt.",
+  description: "Generates a video using the Veo 3.1 model based on a text prompt. Can optionally use an image as a starting frame.",
   parameters: {
     type: Type.OBJECT,
     properties: {
       prompt: {
         type: Type.STRING,
         description: "The text prompt describing the video to generate.",
+      },
+      imageBase64: {
+        type: Type.STRING,
+        description: "Optional base64-encoded image to use as a starting frame for the video. Should include the data URI prefix (e.g., 'data:image/jpeg;base64,...').",
       },
     },
     required: ["prompt"],
@@ -84,9 +89,22 @@ const generateSpeechDeclaration: FunctionDeclaration = {
   },
 };
 
+type RequestStatus = "pending" | "ready" | "error";
+
+type RequestState = {
+  status: RequestStatus;
+  result?: any;
+  error?: string;
+  requestId: string;
+};
+
 function AltairComponent() {
   const [jsonString, setJSONString] = useState<string>("");
   const { client, setConfig, setModel } = useLiveAPIContext();
+  const [requestStates, setRequestStates] = useState<Map<string, RequestState>>(
+    new Map()
+  );
+  const mediaClientRef = useRef<MediaClient | null>(null);
 
   useEffect(() => {
     setModel("models/gemini-2.0-flash-exp");
@@ -117,34 +135,196 @@ function AltairComponent() {
     });
   }, [setConfig, setModel]);
 
+  // Initialize MediaClient
   useEffect(() => {
-    const onToolCall = (toolCall: LiveServerToolCall) => {
+    const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
+    if (API_KEY && !mediaClientRef.current) {
+      mediaClientRef.current = new MediaClient(API_KEY);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onToolCall = async (toolCall: LiveServerToolCall) => {
       if (!toolCall.functionCalls) {
         return;
       }
-      const fc = toolCall.functionCalls.find(
+
+      // Handle render_altair
+      const altairFc = toolCall.functionCalls.find(
         (fc) => fc.name === declaration.name
       );
-      if (fc) {
-        const str = (fc.args as any).json_graph;
+      if (altairFc) {
+        const str = (altairFc.args as any).json_graph;
         setJSONString(str);
       }
-      // send data for the response of your tool call
-      // in this case Im just saying it was successful
-      if (toolCall.functionCalls.length) {
-        setTimeout(
-          () =>
-            client.sendToolResponse({
-              functionResponses: toolCall.functionCalls?.map((fc) => ({
+
+      // Process all function calls and wait for async operations to complete
+      const functionResponses = await Promise.all(
+        toolCall.functionCalls
+          .filter((fc) => fc.id) // Ensure id exists
+          .map(async (fc) => {
+            // Handle render_altair - immediate response
+            if (fc.name === declaration.name) {
+              return {
                 response: { output: { success: true } },
-                id: fc.id,
+                id: fc.id!,
                 name: fc.name,
-              })),
-            }),
-          200
-        );
-      }
+              };
+            }
+
+            // For media client calls, track state and process async
+            const requestId = `${fc.name}_${fc.id}_${Date.now()}`;
+            
+            // Update state to pending (for UI/logging)
+            setRequestStates((prev) => {
+              const newMap = new Map(prev);
+              newMap.set(requestId, {
+                status: "pending",
+                requestId,
+              });
+              return newMap;
+            });
+
+            // Process async operations
+            if (mediaClientRef.current) {
+              try {
+                let result: any;
+                if (fc.name === generateVideoDeclaration.name) {
+                  const prompt = (fc.args as any).prompt;
+                  const imageBase64Arg = (fc.args as any).imageBase64;
+                  
+                  // Parse image data if provided
+                  let imageBase64: string | undefined;
+                  let imageMimeType: string | undefined;
+                  
+                  if (imageBase64Arg) {
+                    // Handle data URI format: "data:image/jpeg;base64,..." or just base64 string
+                    if (imageBase64Arg.startsWith("data:")) {
+                      const matches = imageBase64Arg.match(/^data:([^;]+);base64,(.+)$/);
+                      if (matches) {
+                        imageMimeType = matches[1];
+                        imageBase64 = matches[2];
+                      } else {
+                        // Fallback: try to extract from any data URI format
+                        const commaIndex = imageBase64Arg.indexOf(",");
+                        if (commaIndex > 0) {
+                          const header = imageBase64Arg.substring(0, commaIndex);
+                          const mimeMatch = header.match(/^data:([^;]+)/);
+                          if (mimeMatch) {
+                            imageMimeType = mimeMatch[1];
+                          }
+                          imageBase64 = imageBase64Arg.substring(commaIndex + 1);
+                        }
+                      }
+                    } else {
+                      // Assume it's just base64 data, default to jpeg
+                      imageBase64 = imageBase64Arg;
+                      imageMimeType = "image/jpeg";
+                    }
+                  }
+                  
+                  const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
+                  result = await mediaClientRef.current.generateVideo(
+                    prompt,
+                    imageBase64,
+                    imageMimeType,
+                    API_KEY
+                  );
+                  
+                  // Log the video URL when ready
+                  if (result?.url) {
+                    console.log("Video generation complete! Video URL:", result.url);
+                    console.log("Video URI:", result.uri);
+                  }
+                } else if (fc.name === generateNanoBananaDeclaration.name) {
+                  const prompt = (fc.args as any).prompt;
+                  result = await mediaClientRef.current.generateNanoBanana(
+                    prompt
+                  );
+                } else if (fc.name === generateSpeechDeclaration.name) {
+                  const text = (fc.args as any).text;
+                  result = await mediaClientRef.current.generateSpeech(text);
+                }
+
+                // Update state to ready
+                setRequestStates((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.set(requestId, {
+                    status: "ready",
+                    result,
+                    requestId,
+                  });
+                  return newMap;
+                });
+
+                // Return response with ready status (without result data to keep response small)
+                let message = "Request completed successfully";
+                if (fc.name === generateVideoDeclaration.name && result?.url) {
+                  // Include URL in message for video generation
+                  message = `Video generation complete. URL: ${result.url}`;
+                }
+                
+                return {
+                  response: {
+                    output: {
+                      status: "ready" as RequestStatus,
+                      requestId,
+                      message,
+                    },
+                  },
+                  id: fc.id!,
+                  name: fc.name,
+                };
+              } catch (error: any) {
+                // Update state to error
+                setRequestStates((prev) => {
+                  const newMap = new Map(prev);
+                  newMap.set(requestId, {
+                    status: "error",
+                    error: error?.message || "Unknown error",
+                    requestId,
+                  });
+                  return newMap;
+                });
+
+                // Return error response
+                return {
+                  response: {
+                    output: {
+                      status: "error" as RequestStatus,
+                      requestId,
+                      error: error?.message || "Unknown error",
+                      message: "Request failed",
+                    },
+                  },
+                  id: fc.id!,
+                  name: fc.name,
+                };
+              }
+            }
+
+            // Fallback for non-media-client calls
+            return {
+              response: {
+                output: {
+                  status: "error" as RequestStatus,
+                  requestId,
+                  error: "MediaClient not initialized",
+                  message: "Request failed",
+                },
+              },
+              id: fc.id!,
+              name: fc.name,
+            };
+          })
+      );
+
+      // Send all responses after async operations complete
+      client.sendToolResponse({
+        functionResponses,
+      });
     };
+
     client.on("toolcall", onToolCall);
     return () => {
       client.off("toolcall", onToolCall);
