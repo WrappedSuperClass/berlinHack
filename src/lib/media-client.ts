@@ -101,6 +101,7 @@ export class MediaClient {
             let url = uri;
             if (apiKey && typeof apiKey === 'string') {
                 url = `${uri}&key=${apiKey}`;
+                console.log('Video generation complete. URL:', url);
             }
 
             return {
@@ -115,7 +116,7 @@ export class MediaClient {
     }
 
     /**
-     * Interacts with the Nano Banana Pro model.
+     * Interacts with the Nano Banana Pro model TO GENERATE IMAGES.
      * @param prompt The input prompt.
      * @returns The model response.
      */

@@ -23,6 +23,7 @@ import {
   Type,
 } from "@google/genai";
 import { MediaClient } from "../../lib/media-client";
+import "./altair.scss";
 
 const declaration: FunctionDeclaration = {
   name: "render_altair",
@@ -104,6 +105,31 @@ const generateVideoFromWebcamDeclaration: FunctionDeclaration = {
   },
 };
 
+const showMediaDeclaration: FunctionDeclaration = {
+  name: "show_media",
+  description: "Shows the most recently generated video or image on the screen. Use this after generating media when you want to display it to the user.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      mediaType: {
+        type: Type.STRING,
+        description: "The type of media to show: 'video' or 'image'.",
+      },
+    },
+    required: ["mediaType"],
+  },
+};
+
+const hideMediaDeclaration: FunctionDeclaration = {
+  name: "hide_media",
+  description: "Hides the currently displayed video or image from the screen.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {},
+    required: [],
+  },
+};
+
 type RequestStatus = "pending" | "ready" | "error";
 
 type RequestState = {
@@ -112,6 +138,71 @@ type RequestState = {
   error?: string;
   requestId: string;
 };
+
+type MediaDisplay = {
+  type: "video" | "image";
+  url: string; // Blob URL for video or data URI for image
+  visible: boolean;
+};
+
+/**
+ * Downloads a video from the given URI and returns a blob URL for playback
+ */
+async function downloadVideoAsBlob(uri: string, apiKey: string): Promise<string> {
+  const url = `${uri}&key=${apiKey}`;
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download video: ${response.status} ${response.statusText}`);
+  }
+  const blob = await response.blob();
+  return URL.createObjectURL(blob);
+}
+
+/**
+ * Parses the nano banana image response and extracts the base64 image data
+ */
+function parseImageResponse(response: any): string | null {
+  try {
+    // The response has a structure like: 
+    // { candidates: [{ content: { parts: [{ inlineData: { data: "BASE64", mimeType: "image/jpeg" } }] } }] }
+    // But it may come as a stringified JSON in the result field
+    
+    let data = response;
+    
+    // If response has a result field that's a string, parse it
+    if (typeof response?.result === 'string') {
+      data = JSON.parse(response.result);
+    } else if (response?.response?.candidates) {
+      data = response.response;
+    } else if (response?.candidates) {
+      data = response;
+    }
+    
+    const candidates = data?.candidates;
+    if (!candidates || candidates.length === 0) {
+      console.warn('No candidates in image response');
+      return null;
+    }
+    
+    const parts = candidates[0]?.content?.parts;
+    if (!parts || parts.length === 0) {
+      console.warn('No parts in image response');
+      return null;
+    }
+    
+    const inlineData = parts[0]?.inlineData;
+    if (!inlineData?.data || !inlineData?.mimeType) {
+      console.warn('No inline data in image response');
+      return null;
+    }
+    
+    // Return as data URI
+    return `data:${inlineData.mimeType};base64,${inlineData.data}`;
+  } catch (error) {
+    console.error('Error parsing image response:', error);
+    return null;
+  }
+}
 
 /**
  * Captures a frame from the webcam video element and returns it as a base64 data URI
@@ -163,6 +254,12 @@ function AltairComponent() {
     new Map()
   );
   const mediaClientRef = useRef<MediaClient | null>(null);
+  
+  // State for displaying generated media
+  const [mediaDisplay, setMediaDisplay] = useState<MediaDisplay | null>(null);
+  const [lastGeneratedVideo, setLastGeneratedVideo] = useState<{ uri: string; blobUrl?: string } | null>(null);
+  const [lastGeneratedImage, setLastGeneratedImage] = useState<string | null>(null);
+  const [isLoadingMedia, setIsLoadingMedia] = useState(false);
 
   useEffect(() => {
     setModel("models/gemini-2.0-flash-exp");
@@ -174,7 +271,7 @@ function AltairComponent() {
       systemInstruction: {
         parts: [
           {
-            text: 'You are my helpful assistant. Any time I ask you for a graph call the "render_altair" function I have provided you. Dont ask for additional information just make your best judgement.',
+            text: 'You are my helpful assistant. Any time I ask you for a graph call the "render_altair" function I have provided you. Dont ask for additional information just make your best judgement. When you generate a video or image, you can use the "show_media" function to display it on screen, and "hide_media" to remove it. After generating media, always offer to show it to the user.',
           },
         ],
       },
@@ -188,6 +285,8 @@ function AltairComponent() {
             generateNanoBananaDeclaration,
             generateSpeechDeclaration,
             generateVideoFromWebcamDeclaration,
+            showMediaDeclaration,
+            hideMediaDeclaration,
           ],
         },
       ],
@@ -226,6 +325,73 @@ function AltairComponent() {
             if (fc.name === declaration.name) {
               return {
                 response: { output: { success: true } },
+                id: fc.id!,
+                name: fc.name,
+              };
+            }
+
+            // Handle show_media
+            if (fc.name === showMediaDeclaration.name) {
+              const mediaType = (fc.args as any).mediaType as "video" | "image";
+              const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
+              
+              try {
+                if (mediaType === "video" && lastGeneratedVideo) {
+                  setIsLoadingMedia(true);
+                  
+                  // Download video if we don't have a blob URL yet
+                  let blobUrl = lastGeneratedVideo.blobUrl;
+                  if (!blobUrl) {
+                    blobUrl = await downloadVideoAsBlob(lastGeneratedVideo.uri, API_KEY);
+                    setLastGeneratedVideo({ ...lastGeneratedVideo, blobUrl });
+                  }
+                  
+                  setMediaDisplay({
+                    type: "video",
+                    url: blobUrl,
+                    visible: true,
+                  });
+                  setIsLoadingMedia(false);
+                  
+                  return {
+                    response: { output: { success: true, message: "Video is now displayed on screen." } },
+                    id: fc.id!,
+                    name: fc.name,
+                  };
+                } else if (mediaType === "image" && lastGeneratedImage) {
+                  setMediaDisplay({
+                    type: "image",
+                    url: lastGeneratedImage,
+                    visible: true,
+                  });
+                  
+                  return {
+                    response: { output: { success: true, message: "Image is now displayed on screen." } },
+                    id: fc.id!,
+                    name: fc.name,
+                  };
+                } else {
+                  return {
+                    response: { output: { success: false, error: `No ${mediaType} has been generated yet.` } },
+                    id: fc.id!,
+                    name: fc.name,
+                  };
+                }
+              } catch (error: any) {
+                setIsLoadingMedia(false);
+                return {
+                  response: { output: { success: false, error: error?.message || "Failed to show media" } },
+                  id: fc.id!,
+                  name: fc.name,
+                };
+              }
+            }
+
+            // Handle hide_media
+            if (fc.name === hideMediaDeclaration.name) {
+              setMediaDisplay(null);
+              return {
+                response: { output: { success: true, message: "Media has been hidden from screen." } },
                 id: fc.id!,
                 name: fc.name,
               };
@@ -290,10 +456,11 @@ function AltairComponent() {
                     API_KEY
                   );
                   
-                  // Log the video URL when ready
-                  if (result?.url) {
+                  // Log the video URL when ready and store for display
+                  if (result?.uri) {
                     console.log("Video generation complete! Video URL:", result.url);
                     console.log("Video URI:", result.uri);
+                    setLastGeneratedVideo({ uri: result.uri, blobUrl: undefined });
                   }
                 } else if (fc.name === generateVideoFromWebcamDeclaration.name) {
                   const prompt = (fc.args as any).prompt;
@@ -342,16 +509,24 @@ function AltairComponent() {
                     API_KEY
                   );
                   
-                  // Log the video URL when ready
-                  if (result?.url) {
+                  // Log the video URL when ready and store for display
+                  if (result?.uri) {
                     console.log("Video generation from webcam complete! Video URL:", result.url);
                     console.log("Video URI:", result.uri);
+                    setLastGeneratedVideo({ uri: result.uri, blobUrl: undefined });
                   }
                 } else if (fc.name === generateNanoBananaDeclaration.name) {
                   const prompt = (fc.args as any).prompt;
                   result = await mediaClientRef.current.generateNanoBanana(
                     prompt
                   );
+                  
+                  // Parse and store the generated image
+                  const imageDataUri = parseImageResponse(result);
+                  if (imageDataUri) {
+                    console.log("Image generation complete!");
+                    setLastGeneratedImage(imageDataUri);
+                  }
                 } else if (fc.name === generateSpeechDeclaration.name) {
                   const text = (fc.args as any).text;
                   result = await mediaClientRef.current.generateSpeech(text);
@@ -444,7 +619,7 @@ function AltairComponent() {
     return () => {
       client.off("toolcall", onToolCall);
     };
-  }, [client]);
+  }, [client, lastGeneratedVideo, lastGeneratedImage]);
 
   const embedRef = useRef<HTMLDivElement>(null);
 
@@ -454,7 +629,59 @@ function AltairComponent() {
       vegaEmbed(embedRef.current, JSON.parse(jsonString));
     }
   }, [embedRef, jsonString]);
-  return <div className="vega-embed" ref={embedRef} />;
+
+  // Cleanup blob URLs when component unmounts or media changes
+  useEffect(() => {
+    return () => {
+      if (lastGeneratedVideo?.blobUrl) {
+        URL.revokeObjectURL(lastGeneratedVideo.blobUrl);
+      }
+    };
+  }, [lastGeneratedVideo?.blobUrl]);
+
+  return (
+    <div className="altair-container">
+      <div className="vega-embed" ref={embedRef} />
+      
+      {/* Media Display Area */}
+      {isLoadingMedia && (
+        <div className="media-loading">
+          <div className="loading-spinner" />
+          <span>Loading media...</span>
+        </div>
+      )}
+      
+      {mediaDisplay && mediaDisplay.visible && (
+        <div className="media-display">
+          <button 
+            className="media-close-btn"
+            onClick={() => setMediaDisplay(null)}
+            title="Close"
+          >
+            ×
+          </button>
+          
+          {mediaDisplay.type === "video" && (
+            <video
+              className="generated-video"
+              src={mediaDisplay.url}
+              controls
+              autoPlay
+              loop
+            />
+          )}
+          
+          {mediaDisplay.type === "image" && (
+            <img
+              className="generated-image"
+              src={mediaDisplay.url}
+              alt="Generated"
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const Altair = memo(AltairComponent);
