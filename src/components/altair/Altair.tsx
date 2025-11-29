@@ -89,6 +89,21 @@ const generateSpeechDeclaration: FunctionDeclaration = {
   },
 };
 
+const generateVideoFromWebcamDeclaration: FunctionDeclaration = {
+  name: "generate_video_from_webcam",
+  description: "Captures the current frame from the webcam feed and generates a video using the Veo model with the provided prompt. Use this when the user asks to make a video about what they are currently showing in the camera.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      prompt: {
+        type: Type.STRING,
+        description: "The text prompt describing what video to generate based on the webcam feed.",
+      },
+    },
+    required: ["prompt"],
+  },
+};
+
 type RequestStatus = "pending" | "ready" | "error";
 
 type RequestState = {
@@ -97,6 +112,49 @@ type RequestState = {
   error?: string;
   requestId: string;
 };
+
+/**
+ * Captures a frame from the webcam video element and returns it as a base64 data URI
+ */
+function captureFrameFromWebcam(): string | null {
+  // Find the video element with class "stream"
+  const videoElement = document.querySelector(
+    'video.stream'
+  ) as HTMLVideoElement | null;
+
+  if (!videoElement) {
+    console.warn("No video element found for webcam capture");
+    return null;
+  }
+
+  // Check if video is ready and has dimensions
+  if (
+    videoElement.readyState < 2 ||
+    videoElement.videoWidth === 0 ||
+    videoElement.videoHeight === 0
+  ) {
+    console.warn("Video element is not ready for capture");
+    return null;
+  }
+
+  // Create a canvas to capture the frame
+  const canvas = document.createElement("canvas");
+  canvas.width = videoElement.videoWidth;
+  canvas.height = videoElement.videoHeight;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    console.warn("Could not get canvas context");
+    return null;
+  }
+
+  // Draw the current video frame to the canvas
+  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+  // Convert to base64 data URI
+  const dataURI = canvas.toDataURL("image/jpeg", 1.0);
+  return dataURI;
+}
 
 function AltairComponent() {
   const [jsonString, setJSONString] = useState<string>("");
@@ -129,6 +187,7 @@ function AltairComponent() {
             generateVideoDeclaration,
             generateNanoBananaDeclaration,
             generateSpeechDeclaration,
+            generateVideoFromWebcamDeclaration,
           ],
         },
       ],
@@ -236,6 +295,58 @@ function AltairComponent() {
                     console.log("Video generation complete! Video URL:", result.url);
                     console.log("Video URI:", result.uri);
                   }
+                } else if (fc.name === generateVideoFromWebcamDeclaration.name) {
+                  const prompt = (fc.args as any).prompt;
+                  
+                  // Capture frame from webcam
+                  const frameDataURI = captureFrameFromWebcam();
+                  
+                  if (!frameDataURI) {
+                    throw new Error(
+                      "Could not capture frame from webcam. Make sure the webcam is active and showing video."
+                    );
+                  }
+                  
+                  // Parse the data URI to extract base64 and mime type
+                  let imageBase64: string;
+                  let imageMimeType: string = "image/jpeg";
+                  
+                  if (frameDataURI.startsWith("data:")) {
+                    const matches = frameDataURI.match(/^data:([^;]+);base64,(.+)$/);
+                    if (matches) {
+                      imageMimeType = matches[1];
+                      imageBase64 = matches[2];
+                    } else {
+                      // Fallback: extract base64 after comma
+                      const commaIndex = frameDataURI.indexOf(",");
+                      if (commaIndex > 0) {
+                        const header = frameDataURI.substring(0, commaIndex);
+                        const mimeMatch = header.match(/^data:([^;]+)/);
+                        if (mimeMatch) {
+                          imageMimeType = mimeMatch[1];
+                        }
+                        imageBase64 = frameDataURI.substring(commaIndex + 1);
+                      } else {
+                        throw new Error("Could not parse captured frame data");
+                      }
+                    }
+                  } else {
+                    throw new Error("Invalid frame data format");
+                  }
+                  
+                  const API_KEY = process.env.REACT_APP_GEMINI_API_KEY as string;
+                  result = await mediaClientRef.current.generateVideo(
+                    prompt,
+                    imageBase64,
+                    imageMimeType,
+                    API_KEY
+                  );
+                  
+                  // Log the video URL when ready
+                  if (result?.url) {
+                    console.log("Video generation from webcam complete! Video URL:", result.url);
+                    console.log("Video URI:", result.uri);
+                  }
                 } else if (fc.name === generateNanoBananaDeclaration.name) {
                   const prompt = (fc.args as any).prompt;
                   result = await mediaClientRef.current.generateNanoBanana(
@@ -259,7 +370,11 @@ function AltairComponent() {
 
                 // Return response with ready status (without result data to keep response small)
                 let message = "Request completed successfully";
-                if (fc.name === generateVideoDeclaration.name && result?.url) {
+                if (
+                  (fc.name === generateVideoDeclaration.name ||
+                    fc.name === generateVideoFromWebcamDeclaration.name) &&
+                  result?.url
+                ) {
                   // Include URL in message for video generation
                   message = `Video generation complete. URL: ${result.url}`;
                 }

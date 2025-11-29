@@ -51,9 +51,14 @@ export class MediaClient {
             config: config,
         };
 
-        // Only add the prompt if it's not empty
+        // Construct the prompt with instruction to ignore humans
+        let finalPrompt = prompt;
         if (prompt) {
-            generateVideoPayload.prompt = prompt;
+            // Add instruction to ignore humans and only use objects when an image is provided
+            if (imageBase64 && imageMimeType) {
+                finalPrompt = `${prompt} IMPORTANT: Completely ignore any humans in the image. Only use objects and the environment for video generation. Do not include any human figures or body parts in the generated video.`;
+            }
+            generateVideoPayload.prompt = finalPrompt;
         }
 
         // Add image if provided (for frames-to-video mode)
