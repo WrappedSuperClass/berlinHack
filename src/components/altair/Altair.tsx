@@ -39,6 +39,51 @@ const declaration: FunctionDeclaration = {
   },
 };
 
+const generateVideoDeclaration: FunctionDeclaration = {
+  name: "generate_video",
+  description: "Generates a video using the Veo 3.1 model based on a text prompt.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      prompt: {
+        type: Type.STRING,
+        description: "The text prompt describing the video to generate.",
+      },
+    },
+    required: ["prompt"],
+  },
+};
+
+const generateNanoBananaDeclaration: FunctionDeclaration = {
+  name: "generate_nano_banana",
+  description: "Interacts with the Nano Banana Pro model to generate content based on a prompt.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      prompt: {
+        type: Type.STRING,
+        description: "The input prompt for the Nano Banana Pro model.",
+      },
+    },
+    required: ["prompt"],
+  },
+};
+
+const generateSpeechDeclaration: FunctionDeclaration = {
+  name: "generate_speech",
+  description: "Generates speech audio from text using the Google TTS model.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      text: {
+        type: Type.STRING,
+        description: "The text to convert to speech.",
+      },
+    },
+    required: ["text"],
+  },
+};
+
 function AltairComponent() {
   const [jsonString, setJSONString] = useState<string>("");
   const { client, setConfig, setModel } = useLiveAPIContext();
@@ -60,7 +105,14 @@ function AltairComponent() {
       tools: [
         // there is a free-tier quota for search
         { googleSearch: {} },
-        { functionDeclarations: [declaration] },
+        {
+          functionDeclarations: [
+            declaration,
+            generateVideoDeclaration,
+            generateNanoBananaDeclaration,
+            generateSpeechDeclaration,
+          ],
+        },
       ],
     });
   }, [setConfig, setModel]);
