@@ -1,34 +1,100 @@
+/* ✨ Magical Select Dropdown - Enchanted Choice Box! ✨ */
+
 .react-select {
-  background: var(--Neutral-20);
-  color: var(--Neutral-90);
-  width: 193px;
-  height: 30px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.9) 100%);
+  color: var(--text-primary, #6B4C7A);
+  width: 200px;
+  height: 36px;
+  border-radius: 18px;
+  border: 2px solid rgba(221, 160, 221, 0.4);
+  font-family: var(--font-family, "Fredoka", cursive);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(186, 85, 211, 0.1);
+
+  &:hover {
+    border-color: var(--fairy-pink, #FFB6C1);
+    box-shadow: 0 4px 15px rgba(255, 182, 193, 0.2);
+  }
+
+  .react-select__control {
+    background: transparent;
+    border: none;
+    border-radius: 18px;
+    min-height: 32px;
+    box-shadow: none;
+    
+    &:hover {
+      border: none;
+    }
+  }
 
   .react-select__single-value {
-    color: var(--Neutral-90);
+    color: var(--text-primary, #6B4C7A);
+    font-weight: 500;
   }
 
   .react-select__menu {
-    background: var(--Neutral-20);
-    color: var(--Neutral-90);
+    background: linear-gradient(180deg, 
+      rgba(255, 250, 240, 0.98) 0%, 
+      rgba(255, 240, 245, 0.95) 50%,
+      rgba(230, 230, 250, 0.98) 100%);
+    color: var(--text-primary, #6B4C7A);
+    border-radius: 15px;
+    border: 2px solid rgba(221, 160, 221, 0.4);
+    box-shadow: 0 8px 25px rgba(186, 85, 211, 0.2);
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .react-select__menu-list {
+    padding: 8px;
   }
 
   .react-select__option {
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 2px 0;
+    transition: all 0.2s ease;
+    cursor: pointer;
   }
 
   .react-select__value-container {
+    padding: 0 12px;
   }
 
   .react-select__indicators {
+    color: var(--fairy-purple, #DDA0DD);
+  }
+
+  .react-select__dropdown-indicator {
+    color: var(--fairy-purple-dark, #BA55D3);
+    
+    &:hover {
+      color: var(--fairy-coral, #FF7F7F);
+    }
   }
 
   .react-select__option:hover,
   .react-select__option:focus,
-  .react-select_option:focus-within {
-    background: var(--Neutral-30);
+  .react-select__option:focus-within {
+    background: linear-gradient(145deg, rgba(255, 182, 193, 0.3) 0%, rgba(221, 160, 221, 0.2) 100%);
   }
 
-  .react-select__option--is-focused: {
-    background: var(--Neutral-30);
+  .react-select__option--is-focused {
+    background: linear-gradient(145deg, rgba(255, 182, 193, 0.3) 0%, rgba(221, 160, 221, 0.2) 100%);
+  }
+
+  .react-select__option--is-selected {
+    background: linear-gradient(145deg, var(--fairy-purple, #DDA0DD) 0%, var(--fairy-purple-dark, #BA55D3) 100%);
+    color: white;
+  }
+
+  .react-select__placeholder {
+    color: var(--text-light, #A88BB8);
+    font-style: italic;
+  }
+
+  .react-select__indicator-separator {
+    background-color: rgba(221, 160, 221, 0.3);
   }
 }

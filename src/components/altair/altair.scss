@@ -1,3 +1,5 @@
+/* ✨ Magical Altair Container - Enchanted Display! ✨ */
+
 .altair-container {
   display: flex;
   flex-direction: column;
@@ -6,113 +8,309 @@
   width: 100%;
   height: 100%;
   position: relative;
+  z-index: 1;
 }
 
 .vega-embed {
   max-width: 100%;
+  
+  /* Style the Vega charts with fairytale theme */
+  canvas {
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(186, 85, 211, 0.2);
+  }
 }
 
-/* Media Display Styles */
+/* ✨ Media Display - Magic Picture Frame! ✨ */
 .media-display {
   position: relative;
-  max-width: 90%;
-  max-height: 80%;
+  max-width: 85%;
+  max-height: 75%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.85);
-  border-radius: 16px;
-  padding: 1rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  animation: fadeIn 0.3s ease-out;
+  background: linear-gradient(145deg, 
+    rgba(255, 250, 240, 0.98) 0%, 
+    rgba(255, 240, 245, 0.95) 50%,
+    rgba(230, 230, 250, 0.98) 100%);
+  border-radius: 30px;
+  padding: 20px;
+  border: 4px solid transparent;
+  background-clip: padding-box;
+  animation: fadeInMagic 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
+  /* Rainbow border effect */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    background: linear-gradient(135deg, #FF9AA2, #FFB7B2, #FFDAC1, #E2F0CB, #B5EAD7, #C7CEEA, #DDA0DD);
+    border-radius: 34px;
+    z-index: -1;
+    background-size: 300% 300%;
+    animation: rainbow-shift 4s ease infinite;
+  }
+  
+  /* Outer glow */
+  &::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -20px;
+    right: -20px;
+    bottom: -20px;
+    background: radial-gradient(ellipse, rgba(255, 182, 193, 0.3) 0%, transparent 70%);
+    border-radius: 50px;
+    z-index: -2;
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+  
+  /* Decorative corners */
+  .corner-decoration {
+    position: absolute;
+    font-size: 24px;
+    animation: twinkle 2s ease-in-out infinite;
+  }
 }
 
-@keyframes fadeIn {
+@keyframes fadeInMagic {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.8) rotate(-5deg);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) rotate(0deg);
   }
 }
 
+@keyframes rainbow-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Close Button - Magic Wand! */
 .media-close-btn {
   position: absolute;
-  top: -12px;
-  right: -12px;
-  width: 32px;
-  height: 32px;
+  top: -15px;
+  right: -15px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: var(--Red-500, #ff4600);
-  border: none;
+  background: linear-gradient(145deg, #FF9AA2 0%, #FF7F7F 100%);
+  border: 3px solid white;
   color: white;
-  font-size: 24px;
+  font-size: 26px;
+  font-weight: bold;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s ease, transform 0.15s ease;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   z-index: 10;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 4px 15px rgba(255, 127, 127, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.4);
+  font-family: var(--font-family, "Fredoka", cursive);
 
   &:hover {
-    background: var(--Red-600, #e03c00);
-    transform: scale(1.1);
+    background: linear-gradient(145deg, #FFB6C1 0%, #FF9AA2 100%);
+    transform: scale(1.15) rotate(90deg);
+    box-shadow: 
+      0 6px 25px rgba(255, 182, 193, 0.5),
+      inset 0 2px 4px rgba(255, 255, 255, 0.5);
   }
 
   &:active {
-    transform: scale(0.95);
+    transform: scale(1.05) rotate(90deg);
   }
 }
 
+/* Generated Video - Enchanted Movie! */
 .generated-video {
   max-width: 100%;
-  max-height: 70vh;
-  border-radius: 12px;
+  max-height: 65vh;
+  border-radius: 20px;
   object-fit: contain;
+  box-shadow: 
+    0 8px 32px rgba(186, 85, 211, 0.25),
+    inset 0 0 60px rgba(255, 255, 255, 0.1);
+  animation: float 4s ease-in-out infinite;
+  
+  /* Custom video controls styling */
+  &::-webkit-media-controls-panel {
+    background: linear-gradient(180deg, rgba(255, 240, 245, 0.9) 0%, rgba(230, 230, 250, 0.9) 100%);
+    border-radius: 0 0 20px 20px;
+  }
 }
 
+/* Generated Image - Magic Portrait! */
 .generated-image {
   max-width: 100%;
-  max-height: 70vh;
-  border-radius: 12px;
+  max-height: 65vh;
+  border-radius: 20px;
   object-fit: contain;
+  box-shadow: 
+    0 8px 32px rgba(186, 85, 211, 0.25),
+    0 0 0 3px rgba(255, 215, 0, 0.3);
+  animation: float 4s ease-in-out infinite;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.02);
+    box-shadow: 
+      0 12px 40px rgba(186, 85, 211, 0.35),
+      0 0 0 4px rgba(255, 215, 0, 0.5),
+      0 0 60px rgba(255, 182, 193, 0.3);
+  }
 }
 
-/* Loading Spinner */
+/* Loading Spinner - Magic Fairy Dust! */
 .media-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: 2rem;
-  background: rgba(0, 0, 0, 0.7);
-  border-radius: 16px;
-  color: var(--accent-blue, rgb(161, 228, 242));
-  font-family: var(--font-family, "Space Mono", monospace);
+  gap: 20px;
+  padding: 40px 60px;
+  background: linear-gradient(145deg, 
+    rgba(255, 250, 240, 0.95) 0%, 
+    rgba(255, 240, 245, 0.9) 50%,
+    rgba(230, 230, 250, 0.95) 100%);
+  border-radius: 30px;
+  border: 3px solid rgba(221, 160, 221, 0.4);
+  box-shadow: 
+    0 8px 32px rgba(186, 85, 211, 0.2),
+    inset 0 2px 8px rgba(255, 255, 255, 0.8);
 
   span {
-    font-size: 0.875rem;
+    font-family: var(--font-family-handwritten, "Patrick Hand", cursive);
+    font-size: 1.25rem;
+    color: var(--fairy-purple-dark, #BA55D3);
     letter-spacing: 0.05em;
+    text-shadow: 1px 1px 2px rgba(186, 85, 211, 0.2);
   }
 }
 
+/* Rainbow Spinner */
 .loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(161, 228, 242, 0.2);
-  border-top-color: var(--accent-blue, rgb(161, 228, 242));
+  width: 60px;
+  height: 60px;
+  border: 5px solid rgba(221, 160, 221, 0.2);
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  position: relative;
+  animation: spin 2s linear infinite;
+  
+  /* Rainbow border */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border-radius: 50%;
+    border: 5px solid transparent;
+    border-top-color: #FF9AA2;
+    border-right-color: #FFDAC1;
+    border-bottom-color: #B5EAD7;
+    border-left-color: #C7CEEA;
+    animation: spin 1s linear infinite reverse;
+  }
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
+  to { transform: rotate(360deg); }
+}
+
+/* Fairy dust particles effect */
+.media-display::before,
+.media-loading::before {
+  pointer-events: none;
+}
+
+/* ✨ Media Generating Indicator - Creating Magic! ✨ */
+.media-generating-indicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 24px;
+  background: linear-gradient(145deg, 
+    rgba(255, 250, 240, 0.95) 0%, 
+    rgba(255, 240, 245, 0.9) 100%);
+  border-radius: 50px;
+  border: 3px solid rgba(255, 182, 193, 0.5);
+  box-shadow: 
+    0 4px 20px rgba(186, 85, 211, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  animation: pulse-glow 2s ease-in-out infinite;
+  z-index: 100;
+
+  span {
+    font-family: var(--font-family-handwritten, "Patrick Hand", cursive);
+    font-size: 1.1rem;
+    color: var(--fairy-purple-dark, #BA55D3);
+    letter-spacing: 0.03em;
   }
 }
 
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 
+      0 4px 20px rgba(186, 85, 211, 0.2),
+      inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  }
+  50% { 
+    box-shadow: 
+      0 6px 30px rgba(186, 85, 211, 0.4),
+      0 0 20px rgba(255, 182, 193, 0.5),
+      inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  }
+}
+
+/* Generating Spinner - Magic Wand Spinning! */
+.generating-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(221, 160, 221, 0.3);
+  border-radius: 50%;
+  position: relative;
+  animation: spin 1.5s linear infinite;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: #FF9AA2;
+    border-right-color: #FFD700;
+    animation: spin 0.8s linear infinite reverse;
+  }
+}

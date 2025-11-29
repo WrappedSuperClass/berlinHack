@@ -1,30 +1,40 @@
+/* ✨ Magical Logger - Enchanted Message Scroll! ✨ */
+
 .logger {
-  color: var(--gray-300);
+  color: var(--text-secondary, #8B6B9B);
   width: 100%;
   max-width: 100%;
   display: block;
+  font-family: var(--font-family, "Fredoka", cursive);
 
   .logger-list {
-    padding: 0 0px 0 25px;
+    padding: 0 0px 0 20px;
     overflow-x: hidden;
-    width: calc(100% - 45px);
+    width: calc(100% - 40px);
   }
 
   .user h4 {
-    color: var(--Green-500);
+    color: var(--fairy-mint, #98FF98);
+    text-shadow: 0 1px 2px rgba(152, 255, 152, 0.3);
   }
 
   .model h4 {
-    color: var(--Blue-500);
+    color: var(--fairy-purple-dark, #BA55D3);
+    text-shadow: 0 1px 2px rgba(186, 85, 211, 0.3);
   }
 
   .rich-log {
     display: flex;
     justify-content: center;
-    gap: 4px;
+    gap: 6px;
 
     pre {
       overflow-x: auto;
+      font-family: var(--font-family, "Fredoka", cursive);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(240, 248, 255, 0.4) 100%);
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid rgba(221, 160, 221, 0.2);
     }
 
     display: block;
@@ -32,33 +42,38 @@
     h4 {
       font-size: 14px;
       text-transform: uppercase;
-      padding: 8px 0;
+      padding: 10px 0;
       margin: 0;
+      letter-spacing: 0.5px;
     }
 
     h5 {
       margin: 0;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--Neutral-20);
+      padding-bottom: 10px;
+      border-bottom: 2px dashed rgba(221, 160, 221, 0.3);
+      color: var(--text-primary, #6B4C7A);
     }
 
     .part {
-      background: var(--Neutral-5);
-      padding: 14px;
-      margin-bottom: 4px;
-      color: var(--Neutral-90);
-      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 240, 245, 0.6) 100%);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      color: var(--text-primary, #6B4C7A);
+      border-radius: 15px;
+      border: 1px solid rgba(221, 160, 221, 0.2);
+      box-shadow: 0 2px 8px rgba(186, 85, 211, 0.05);
     }
   }
 
   .plain-log {
-    &>* {
-      padding-right: 4px;
+    & > * {
+      padding-right: 6px;
     }
   }
 
   .inline-code:not(:last-child) {
     font-style: italic;
+    color: var(--fairy-purple-dark, #BA55D3);
 
     &::after {
       content: ", ";
@@ -68,49 +83,59 @@
 
 .logger li {
   display: block;
-  padding: 8px 0;
-  color: var(--Neutral-50, #707577);
-  font-family: "Space Mono";
+  padding: 12px 0;
+  color: var(--text-secondary, #8B6B9B);
+  font-family: var(--font-family, "Fredoka", cursive);
   font-size: 14px;
-  font-style: normal;
   font-weight: 400;
-  line-height: normal;
+  line-height: 1.5;
+  border-bottom: 1px dashed rgba(221, 160, 221, 0.15);
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding-left: 8px;
+  }
 }
 
 .logger li .timestamp {
-  width: 70px;
+  width: 75px;
   flex-grow: 0;
   flex-shrink: 0;
-  color: var(--Neutral-50);
+  color: var(--text-light, #A88BB8);
+  font-size: 12px;
+  opacity: 0.8;
 }
 
 .logger li .source {
   flex-shrink: 0;
-  font-weight: bold;
+  font-weight: 600;
 }
 
 .logger li.source-server,
 .logger li.receive {
-  color: var(--Blue-500);
+  color: var(--fairy-purple-dark, #BA55D3);
 }
 
 .logger li.source-client,
 .logger li.send:not(.source-server) {
-  color: var(--Green-500);
+  color: var(--fairy-mint, #7CCD7C);
 }
 
 .logger li .count {
-  background-color: var(--Neutral-5);
-  font-size: x-small;
-  padding: 0em 0.6em;
-  padding: 0.3em 0.5em;
+  background: linear-gradient(145deg, rgba(221, 160, 221, 0.2) 0%, rgba(186, 85, 211, 0.2) 100%);
+  font-size: 11px;
+  padding: 0.35em 0.6em;
   line-height: 1em;
   vertical-align: middle;
-  border-radius: 8px;
-  color: var(--Blue-500);
+  border-radius: 20px;
+  color: var(--fairy-purple-dark, #BA55D3);
+  border: 1px solid rgba(221, 160, 221, 0.3);
+  font-weight: 500;
 }
 
 .logger li .message {
   flex-grow: 1;
-  color: var(--Neutral-50);
+  color: var(--text-secondary, #8B6B9B);
 }

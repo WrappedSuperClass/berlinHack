@@ -1,30 +1,39 @@
+/* ✨ Magical Control Tray - Fairy Wand Buttons! ✨ */
+
 .action-button {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--Neutral-20);
-  color: var(--Neutral-60);
+  background: linear-gradient(145deg, #FFFFFF 0%, #F0F8FF 100%);
+  color: var(--text-secondary, #8B6B9B);
   font-size: 1.25rem;
   line-height: 1.75rem;
   text-transform: lowercase;
   cursor: pointer;
-  animation: opacity-pulse 3s ease-in infinite;
-  transition: all 0.2s ease-in-out;
-  width: 48px;
-  height: 48px;
-  border-radius: 18px;
-  border: 1px solid rgba(0, 0, 0, 0);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid rgba(221, 160, 221, 0.5);
   user-select: none;
-  cursor: pointer;
+  box-shadow: 
+    0 4px 15px rgba(186, 85, 211, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.8);
+  position: relative;
+  overflow: visible;
+
 
   &:focus {
-    border: 2px solid var(--Neutral-20);
-    outline: 2px solid var(--Neutral-80);
+    border: 3px solid var(--fairy-gold, #FFD700);
+    outline: none;
+    box-shadow: 
+      0 0 0 4px rgba(255, 215, 0, 0.3),
+      0 4px 20px rgba(255, 215, 0, 0.4);
   }
 
   &.outlined {
-    background: var(--Neutral-2);
-    border: 1px solid var(--Neutral-20);
+    background: rgba(255, 255, 255, 0.7);
+    border: 2px dashed var(--fairy-purple, #DDA0DD);
   }
 
   .no-action {
@@ -32,16 +41,31 @@
   }
 
   &:hover {
-    background: rgba(0, 0, 0, 0);
-    border: 1px solid var(--Neutral-20);
+    background: linear-gradient(145deg, #FFF0F5 0%, #FFE4EC 100%);
+    border-color: var(--fairy-pink, #FFB6C1);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 
+      0 8px 25px rgba(255, 182, 193, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.9);
+  }
+
+  &:active {
+    transform: translateY(0) scale(0.98);
   }
 
   &.connected {
-    background: var(--Blue-800);
-    color: var(--Blue-500);
+    background: linear-gradient(145deg, #E8F4FC 0%, #B0E2FF 100%);
+    color: var(--fairy-sky, #87CEEB);
+    border-color: var(--fairy-sky, #87CEEB);
+    box-shadow: 
+      0 4px 20px rgba(135, 206, 235, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.8);
 
     &:hover {
-      border: 1px solid var(--Blue-500);
+      border-color: #5DADE2;
+      box-shadow: 
+        0 6px 25px rgba(135, 206, 235, 0.5),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9);
     }
   }
 }
@@ -52,27 +76,59 @@
   initial-value: 0px;
 }
 
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes magic-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(255, 127, 127, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 0 15px rgba(255, 127, 127, 0);
+  }
+}
+
+@keyframes rainbow-border {
+  0% { border-color: #FF9AA2; }
+  25% { border-color: #FFDAC1; }
+  50% { border-color: #B5EAD7; }
+  75% { border-color: #C7CEEA; }
+  100% { border-color: #FF9AA2; }
+}
+
 .disabled .mic-button,
 .mic-button.disabled {
   &:before {
     background: rgba(0, 0, 0, 0);
   }
+  opacity: 0.5;
 }
 
+/* Microphone Button - Magic Wand! */
 .mic-button {
   position: relative;
-  background-color: var(--accent-red);
+  background: linear-gradient(145deg, #FF9AA2 0%, #FF7F7F 100%);
   z-index: 1;
-  color: black;
-  transition: all 0.2s ease-in;
+  color: white;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  animation: magic-pulse 2s ease-in-out infinite;
 
   &:focus {
-    border: 2px solid var(--Neutral-20);
-    outline: 2px solid var(--Red-500);
+    border: 3px solid var(--fairy-gold, #FFD700);
+    outline: none;
+    box-shadow: 
+      0 0 0 4px rgba(255, 215, 0, 0.3),
+      0 4px 20px rgba(255, 127, 127, 0.5);
   }
 
   &:hover {
-    background-color: var(--Red-400);
+    background: linear-gradient(145deg, #FFB6C1 0%, #FF9AA2 100%);
+    transform: translateY(-3px) scale(1.08);
+    box-shadow: 
+      0 8px 30px rgba(255, 127, 127, 0.5);
   }
 
   &:before {
@@ -82,27 +138,63 @@
     left: calc(var(--volume) * -1);
     display: block;
     content: "";
-    opacity: 0.35;
-    background-color: var(--Red-500);
+    opacity: 0.4;
+    background: linear-gradient(145deg, #FFB6C1 0%, #FF9AA2 100%);
     width: calc(100% + var(--volume) * 2);
     height: calc(100% + var(--volume) * 2);
-    border-radius: 24px;
-    transition: all 0.02s ease-in-out;
+    border-radius: 50%;
+    transition: all 0.05s ease-in-out;
   }
 }
 
+/* Connect Toggle - Magic Portal! */
 .connect-toggle {
+  position: relative;
+  
   &:focus {
-    border: 2px solid var(--Neutral-20);
-    outline: 2px solid var(--Neutral-80);
+    border: 3px solid var(--fairy-gold, #FFD700);
+    outline: none;
   }
 
   &:not(.connected) {
-    background-color: var(--Blue-500);
-    color: var(--Neutral-5);
+    background: linear-gradient(145deg, #BA55D3 0%, #9932CC 100%);
+    color: white;
+    border: 3px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 
+      0 4px 20px rgba(186, 85, 211, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    animation: rainbow-border 4s ease infinite;
+    
+    &:hover {
+      background: linear-gradient(145deg, #DDA0DD 0%, #BA55D3 100%);
+      transform: translateY(-3px) scale(1.08);
+      box-shadow: 
+        0 8px 30px rgba(186, 85, 211, 0.5),
+        0 0 40px rgba(221, 160, 221, 0.3);
+    }
+    
+    /* Magic sparkle ring */
+    &::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      right: -6px;
+      bottom: -6px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #FF9AA2, #FFDAC1, #B5EAD7, #C7CEEA, #DDA0DD, #FF9AA2);
+      z-index: -1;
+      opacity: 0.6;
+      animation: spin 3s linear infinite;
+    }
   }
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Control Tray Container - Floating Cloud! */
 .control-tray {
   position: absolute;
   bottom: 0;
@@ -111,14 +203,20 @@
   display: inline-flex;
   justify-content: center;
   align-items: flex-start;
-  gap: 8px;
-  padding-bottom: 18px;
+  gap: 12px;
+  padding-bottom: 24px;
+  z-index: 100;
 
   .disabled .action-button,
   .action-button.disabled {
-    background: rgba(0, 0, 0, 0);
-    border: 1px solid var(--Neutral-30, #404547);
-    color: var(--Neutral-30);
+    background: rgba(255, 255, 255, 0.4);
+    border: 2px dashed rgba(221, 160, 221, 0.3);
+    color: rgba(139, 107, 155, 0.4);
+    box-shadow: none;
+    
+    &:hover {
+      transform: none;
+    }
   }
 
   .connection-container {
@@ -126,19 +224,27 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 4px;
+    gap: 8px;
 
     .connection-button-container {
-      border-radius: 27px;
-      border: 1px solid var(--Neutral-30);
-      background: var(--Neutral-5);
-      padding: 10px;
+      border-radius: 35px;
+      border: 3px solid rgba(221, 160, 221, 0.4);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.9) 100%);
+      padding: 14px;
+      box-shadow: 
+        0 8px 32px rgba(186, 85, 211, 0.15),
+        inset 0 2px 8px rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(10px);
     }
 
     .text-indicator {
-      font-size: 11px;
-      color: var(--Blue-500);
+      font-family: var(--font-family, "Fredoka", cursive);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fairy-purple-dark, #BA55D3);
       user-select: none;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+      letter-spacing: 0.5px;
     }
 
     &:not(.connected) {
@@ -149,19 +255,31 @@
   }
 }
 
+/* Actions Navigation - Magic Bubble! */
 .actions-nav {
-  background: var(--Neutral-5);
-  border: 1px solid var(--Neutral-30);
-  border-radius: 27px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 248, 255, 0.9) 100%);
+  border: 3px solid rgba(221, 160, 221, 0.4);
+  border-radius: 35px;
   display: inline-flex;
   gap: 12px;
   align-items: center;
-  overflow: clip;
-  padding: 10px;
+  overflow: visible;
+  padding: 14px;
+  box-shadow: 
+    0 8px 32px rgba(186, 85, 211, 0.15),
+    inset 0 2px 8px rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
+  /* Magical glow on hover */
+  &:hover {
+    box-shadow: 
+      0 12px 40px rgba(186, 85, 211, 0.25),
+      inset 0 2px 8px rgba(255, 255, 255, 0.9),
+      0 0 60px rgba(255, 182, 193, 0.2);
+  }
 
-  transition: all 0.6s ease-in;
-
-  &>* {
+  & > * {
     display: flex;
     align-items: center;
     flex-direction: column;
@@ -171,7 +289,7 @@
 
 @keyframes opacity-pulse {
   0% {
-    opacity: 0.9;
+    opacity: 0.85;
   }
 
   50% {
@@ -179,6 +297,6 @@
   }
 
   100% {
-    opacity: 0.9;
+    opacity: 0.85;
   }
 }

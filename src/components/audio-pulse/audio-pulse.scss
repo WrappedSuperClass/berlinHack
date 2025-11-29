@@ -1,31 +1,48 @@
+/* ✨ Magical Audio Pulse - Dancing Fairy Bars! ✨ */
+
 .audioPulse {
   display: flex;
-  width: 24px;
+  width: 28px;
   justify-content: space-evenly;
   align-items: center;
   transition: all 0.5s;
 
   & > div {
-    background-color: var(--Neutral-30);
+    background: linear-gradient(180deg, #DDA0DD 0%, #BA55D3 100%);
     border-radius: 1000px;
-    width: 4px;
-    min-height: 4px;
+    width: 5px;
+    min-height: 5px;
     border-radius: 1000px;
     transition: height 0.1s;
+    box-shadow: 0 0 8px rgba(186, 85, 211, 0.4);
+    
+    &:nth-child(1) {
+      animation-delay: 0s;
+    }
+    &:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.2s;
+    }
   }
 
   &.hover > div {
     animation: hover 1.4s infinite alternate ease-in-out;
   }
 
-  height: 4px;
+  height: 5px;
   transition: opacity 0.333s;
 
   &.active {
     opacity: 1;
 
     & > div {
-      background-color: var(--Neutral-80);
+      background: linear-gradient(180deg, #FF9AA2 0%, #FF7F7F 100%);
+      box-shadow: 
+        0 0 10px rgba(255, 127, 127, 0.5),
+        0 0 20px rgba(255, 154, 162, 0.3);
+      animation: rainbow-pulse 2s infinite ease-in-out;
     }
   }
 }
@@ -33,10 +50,31 @@
 @keyframes hover {
   from {
     transform: translateY(0);
+    background: linear-gradient(180deg, #DDA0DD 0%, #BA55D3 100%);
   }
 
   to {
-    transform: translateY(-3.5px);
+    transform: translateY(-4px);
+    background: linear-gradient(180deg, #FFB6C1 0%, #FF9AA2 100%);
+  }
+}
+
+@keyframes rainbow-pulse {
+  0%, 100% {
+    background: linear-gradient(180deg, #FF9AA2 0%, #FF7F7F 100%);
+    box-shadow: 0 0 10px rgba(255, 127, 127, 0.5);
+  }
+  25% {
+    background: linear-gradient(180deg, #FFDAC1 0%, #FFB7B2 100%);
+    box-shadow: 0 0 10px rgba(255, 218, 193, 0.5);
+  }
+  50% {
+    background: linear-gradient(180deg, #B5EAD7 0%, #98FF98 100%);
+    box-shadow: 0 0 10px rgba(181, 234, 215, 0.5);
+  }
+  75% {
+    background: linear-gradient(180deg, #C7CEEA 0%, #87CEEB 100%);
+    box-shadow: 0 0 10px rgba(199, 206, 234, 0.5);
   }
 }
 
@@ -46,6 +84,6 @@
   }
 
   to {
-    scale: 1.2 1.2;
+    scale: 1.25 1.25;
   }
 }

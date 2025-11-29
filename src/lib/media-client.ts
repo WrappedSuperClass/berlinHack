@@ -116,11 +116,11 @@ export class MediaClient {
     }
 
     /**
-     * Interacts with the Nano Banana Pro model TO GENERATE IMAGES.
+     * Generates images using the image generation model.
      * @param prompt The input prompt.
      * @returns The model response.
      */
-    async generateNanoBanana(prompt: string) {
+    async generateImage(prompt: string) {
         const result = await this.client.models.generateContent({
             model: MODEL_NANO_BANANA_PRO,
             contents: prompt

@@ -16,8 +16,9 @@
 
 import cn from "classnames";
 
-import { memo, ReactNode, RefObject, useEffect, useRef, useState } from "react";
+import { memo, ReactNode, RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
+import { useFunctionAPIContext } from "../../contexts/FunctionAPIContext";
 import { UseMediaStreamResult } from "../../hooks/use-media-stream-mux";
 import { useScreenCapture } from "../../hooks/use-screen-capture";
 import { useWebcam } from "../../hooks/use-webcam";
@@ -75,8 +76,38 @@ function ControlTray({
   const renderCanvasRef = useRef<HTMLCanvasElement>(null);
   const connectButtonRef = useRef<HTMLButtonElement>(null);
 
-  const { client, connected, connect, disconnect, volume } =
-    useLiveAPIContext();
+  // Speaking model - handles audio conversation
+  const { 
+    client: speakingClient, 
+    connected: speakingConnected, 
+    connect: connectSpeaking, 
+    disconnect: disconnectSpeaking, 
+    volume 
+  } = useLiveAPIContext();
+  
+  // Function model - handles function calling
+  const { 
+    client: functionClient, 
+    connected: functionConnected, 
+    connect: connectFunction, 
+    disconnect: disconnectFunction 
+  } = useFunctionAPIContext();
+  
+  // Both models need to be connected for the system to work
+  const connected = speakingConnected && functionConnected;
+  
+  // Connect/disconnect both models together
+  const connect = useCallback(async () => {
+    console.log("[ControlTray] Connecting both models...");
+    await Promise.all([connectSpeaking(), connectFunction()]);
+    console.log("[ControlTray] Both models connected!");
+  }, [connectSpeaking, connectFunction]);
+  
+  const disconnect = useCallback(async () => {
+    console.log("[ControlTray] Disconnecting both models...");
+    await Promise.all([disconnectSpeaking(), disconnectFunction()]);
+    console.log("[ControlTray] Both models disconnected!");
+  }, [disconnectSpeaking, disconnectFunction]);
 
   useEffect(() => {
     if (!connected && connectButtonRef.current) {
@@ -90,14 +121,17 @@ function ControlTray({
     );
   }, [inVolume]);
 
+  // Send audio data to BOTH models
   useEffect(() => {
     const onData = (base64: string) => {
-      client.sendRealtimeInput([
-        {
-          mimeType: "audio/pcm;rate=16000",
-          data: base64,
-        },
-      ]);
+      const audioChunk = {
+        mimeType: "audio/pcm;rate=16000",
+        data: base64,
+      };
+      // Send to speaking model (for conversation)
+      speakingClient.sendRealtimeInput([audioChunk]);
+      // Send to function model (for function calling)
+      functionClient.sendRealtimeInput([audioChunk]);
     };
     if (connected && !muted && audioRecorder) {
       audioRecorder.on("data", onData).on("volume", setInVolume).start();
@@ -107,8 +141,9 @@ function ControlTray({
     return () => {
       audioRecorder.off("data", onData).off("volume", setInVolume);
     };
-  }, [connected, client, muted, audioRecorder]);
+  }, [connected, speakingClient, functionClient, muted, audioRecorder]);
 
+  // Send video frames to BOTH models
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.srcObject = activeVideoStream;
@@ -131,7 +166,10 @@ function ControlTray({
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const base64 = canvas.toDataURL("image/jpeg", 1.0);
         const data = base64.slice(base64.indexOf(",") + 1, Infinity);
-        client.sendRealtimeInput([{ mimeType: "image/jpeg", data }]);
+        const videoChunk = { mimeType: "image/jpeg", data };
+        // Send to both models
+        speakingClient.sendRealtimeInput([videoChunk]);
+        functionClient.sendRealtimeInput([videoChunk]);
       }
       if (connected) {
         timeoutId = window.setTimeout(sendVideoFrame, 1000 / 0.5);
@@ -143,7 +181,7 @@ function ControlTray({
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [connected, activeVideoStream, client, videoRef]);
+  }, [connected, activeVideoStream, speakingClient, functionClient, videoRef]);
 
   //handler for swapping from one video-stream to the next
   const changeStreams = (next?: UseMediaStreamResult) => async () => {

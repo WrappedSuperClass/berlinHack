@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { useEffect, useRef, useState, memo } from "react";
+import { useEffect, useRef, useState, memo, useCallback } from "react";
 import vegaEmbed from "vega-embed";
 import { useLiveAPIContext } from "../../contexts/LiveAPIContext";
+import { useFunctionAPIContext } from "../../contexts/FunctionAPIContext";
 import {
   FunctionDeclaration,
   LiveServerToolCall,
@@ -41,34 +42,41 @@ const declaration: FunctionDeclaration = {
   },
 };
 
+// 1) Generate a cartoon / explainer VIDEO from text (optionally using an image as first frame)
 const generateVideoDeclaration: FunctionDeclaration = {
   name: "generate_video",
-  description: "Generates a video using the Veo 3.1 model based on a text prompt. Can optionally use an image as a starting frame.",
+  description:
+    "Generates a short, kid-friendly explainer or cartoon video using the Veo 3.1 model based on a text prompt. Can optionally use an image as a starting frame.",
   parameters: {
     type: Type.OBJECT,
     properties: {
       prompt: {
         type: Type.STRING,
-        description: "The text prompt describing the video to generate.",
+        description:
+          "A clear, detailed text prompt describing the video to generate. Mention that it should be simple, colorful, and easy for children to understand.",
       },
       imageBase64: {
         type: Type.STRING,
-        description: "Optional base64-encoded image to use as a starting frame for the video. Should include the data URI prefix (e.g., 'data:image/jpeg;base64,...').",
+        description:
+          "Optional base64-encoded image to use as a starting frame for the video (for example, a previously generated explainer image). Should include the data URI prefix (e.g., 'data:image/jpeg;base64,...').",
       },
     },
     required: ["prompt"],
   },
 };
 
-const generateNanoBananaDeclaration: FunctionDeclaration = {
-  name: "generate_nano_banana",
-  description: "Interacts with the Nano Banana Pro model to generate content based on a prompt.",
+// 2) IMAGE GENERATION
+const generateImageDeclaration: FunctionDeclaration = {
+  name: "generate_image",
+  description:
+    "Generates one or more kid-friendly images based on a text prompt. Use this for explanation pictures (e.g., why the sky is blue), still frames of a favorite toy, or simple cartoon scenes.",
   parameters: {
     type: Type.OBJECT,
     properties: {
       prompt: {
         type: Type.STRING,
-        description: "The input prompt for the Nano Banana Pro model.",
+        description:
+          "A clear, detailed text prompt describing the image(s) to generate. Mention that the style should be simple, colorful, and easy for children to understand.",
       },
     },
     required: ["prompt"],
@@ -90,39 +98,46 @@ const generateSpeechDeclaration: FunctionDeclaration = {
   },
 };
 
+// 3) Generate a VIDEO based on what the child is showing on the webcam (toy, Lego, etc.)
 const generateVideoFromWebcamDeclaration: FunctionDeclaration = {
   name: "generate_video_from_webcam",
-  description: "Captures the current frame from the webcam feed and generates a video using the Veo model with the provided prompt. Use this when the user asks to make a video about what they are currently showing in the camera.",
+  description:
+    "Captures the current frame from the webcam feed and generates a kid-friendly video using the Veo model with the provided prompt. Use this when the child asks to make a cartoon about what they are currently showing in the camera (for example, their favorite toy or a Lego tower).",
   parameters: {
     type: Type.OBJECT,
     properties: {
       prompt: {
         type: Type.STRING,
-        description: "The text prompt describing what video to generate based on the webcam feed.",
+        description:
+          "A text prompt describing what video to generate based on the webcam frame, including how the shown object should move or act in the cartoon or explainer.",
       },
     },
     required: ["prompt"],
   },
 };
 
+// 4) Show the latest generated media (image or video)
 const showMediaDeclaration: FunctionDeclaration = {
   name: "show_media",
-  description: "Shows the most recently generated video or image on the screen. Use this after generating media when you want to display it to the user.",
+  description:
+    "Shows the most recently generated video or image on the screen. Use this after generating media when you want to display it to the child.",
   parameters: {
     type: Type.OBJECT,
     properties: {
       mediaType: {
         type: Type.STRING,
-        description: "The type of media to show: 'video' or 'image'.",
+        description: "The type of media to show: 'video' or 'image'. Call it right after the media is generated.",
       },
     },
     required: ["mediaType"],
   },
 };
 
+// 5) Hide whatever is currently displayed
 const hideMediaDeclaration: FunctionDeclaration = {
   name: "hide_media",
-  description: "Hides the currently displayed video or image from the screen.",
+  description:
+    "Hides the currently displayed video or image from the screen.",
   parameters: {
     type: Type.OBJECT,
     properties: {},
@@ -163,13 +178,8 @@ async function downloadVideoAsBlob(uri: string, apiKey: string): Promise<string>
  */
 function parseImageResponse(response: any): string | null {
   try {
-    // The response has a structure like: 
-    // { candidates: [{ content: { parts: [{ inlineData: { data: "BASE64", mimeType: "image/jpeg" } }] } }] }
-    // But it may come as a stringified JSON in the result field
-    
     let data = response;
     
-    // If response has a result field that's a string, parse it
     if (typeof response?.result === 'string') {
       data = JSON.parse(response.result);
     } else if (response?.response?.candidates) {
@@ -196,7 +206,6 @@ function parseImageResponse(response: any): string | null {
       return null;
     }
     
-    // Return as data URI
     return `data:${inlineData.mimeType};base64,${inlineData.data}`;
   } catch (error) {
     console.error('Error parsing image response:', error);
@@ -208,7 +217,6 @@ function parseImageResponse(response: any): string | null {
  * Captures a frame from the webcam video element and returns it as a base64 data URI
  */
 function captureFrameFromWebcam(): string | null {
-  // Find the video element with class "stream"
   const videoElement = document.querySelector(
     'video.stream'
   ) as HTMLVideoElement | null;
@@ -218,7 +226,6 @@ function captureFrameFromWebcam(): string | null {
     return null;
   }
 
-  // Check if video is ready and has dimensions
   if (
     videoElement.readyState < 2 ||
     videoElement.videoWidth === 0 ||
@@ -228,7 +235,6 @@ function captureFrameFromWebcam(): string | null {
     return null;
   }
 
-  // Create a canvas to capture the frame
   const canvas = document.createElement("canvas");
   canvas.width = videoElement.videoWidth;
   canvas.height = videoElement.videoHeight;
@@ -239,17 +245,20 @@ function captureFrameFromWebcam(): string | null {
     return null;
   }
 
-  // Draw the current video frame to the canvas
   ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-
-  // Convert to base64 data URI
   const dataURI = canvas.toDataURL("image/jpeg", 1.0);
   return dataURI;
 }
 
 function AltairComponent() {
   const [jsonString, setJSONString] = useState<string>("");
-  const { client, setConfig, setModel } = useLiveAPIContext();
+  
+  // Speaking model - handles conversation with audio output
+  const { client: speakingClient, setConfig: setSpeakingConfig, setModel: setSpeakingModel } = useLiveAPIContext();
+  
+  // Function model - handles function calling (no audio output)
+  const { client: functionClient, setConfig: setFunctionConfig, setModel: setFunctionModel } = useFunctionAPIContext();
+  
   const [requestStates, setRequestStates] = useState<Map<string, RequestState>>(
     new Map()
   );
@@ -260,10 +269,22 @@ function AltairComponent() {
   const [lastGeneratedVideo, setLastGeneratedVideo] = useState<{ uri: string; blobUrl?: string } | null>(null);
   const [lastGeneratedImage, setLastGeneratedImage] = useState<string | null>(null);
   const [isLoadingMedia, setIsLoadingMedia] = useState(false);
+  
+  // Track if media generation is in progress
+  const [isGeneratingMedia, setIsGeneratingMedia] = useState(false);
+  const [generatingMediaType, setGeneratingMediaType] = useState<"image" | "video" | null>(null);
 
+  // Notify the speaking model about events (media ready, etc.)
+  const notifySpeakingModel = useCallback((message: string) => {
+    console.log("[Notify Speaking Model]:", message);
+    // Send a text message to the speaking model so it knows what happened
+    speakingClient.send({ text: `[SYSTEM NOTIFICATION]: ${message}` }, false);
+  }, [speakingClient]);
+
+  // Configure the SPEAKING model (audio output, no function declarations)
   useEffect(() => {
-    setModel("models/gemini-2.0-flash-exp");
-    setConfig({
+    setSpeakingModel("models/gemini-2.0-flash-exp");
+    setSpeakingConfig({
       responseModalities: [Modality.AUDIO],
       speechConfig: {
         voiceConfig: { prebuiltVoiceConfig: { voiceName: "Aoede" } },
@@ -271,18 +292,75 @@ function AltairComponent() {
       systemInstruction: {
         parts: [
           {
-            text: 'You are my helpful assistant. Any time I ask you for a graph call the "render_altair" function I have provided you. Dont ask for additional information just make your best judgement. When you generate a video or image, you can use the "show_media" function to display it on screen, and "hide_media" to remove it. After generating media, always offer to show it to the user.',
+            text: `You are a friendly, enthusiastic explainer for children. Your ONLY job is to TALK and explain things in a fun, engaging way.
+
+CRITICAL: WAIT for the child to speak FIRST before saying anything! Do not start talking on your own.
+
+IMPORTANT RULES:
+1. WAIT for the child to ask a question or say something before responding
+2. When the child asks a question, start explaining it in great detail. Talk for at least 2-3 minutes continuously.
+3. Use a warm, excited tone. Say things like "Oh, what a wonderful question! Let me tell you all about..."
+4. You will receive SYSTEM NOTIFICATIONS about media (images, videos) being generated or displayed. When you see these notifications, naturally incorporate them into your conversation, like "Oh look! The picture is ready! Can you see it on the screen?"
+5. NEVER stop talking while waiting for something. Keep explaining, telling related stories, or asking the child questions.
+6. If you're notified that a cartoon/image is ready, get excited and describe what might be in it while the child looks at it.
+
+Example flow:
+- [WAIT for the child to speak first]
+- Child asks: "Why is the sky blue?"
+- You start: "Oh, what a wonderful question! The sky is blue because of something magical called light scattering! You see, sunlight looks white, but it's actually made of ALL the colors of the rainbow mixed together! When sunlight enters our atmosphere..."
+- [You receive notification: Image is being generated]
+- You continue: "...and guess what? I'm making a special picture for you right now to help explain this! While it's being created, let me tell you more about how this works..."
+- [You receive notification: Image is ready and displayed]
+- You say: "Oh wonderful! Look at the screen! Can you see the picture? It shows how the light bounces around in our atmosphere..."
+
+Remember: WAIT for the child to speak first, then keep talking and explaining. Other systems handle the image/video generation - you just talk!`,
+          },
+        ],
+      },
+      // NO tools for the speaking model - it just talks
+    });
+  }, [setSpeakingConfig, setSpeakingModel]);
+
+  // Configure the FUNCTION model (text output, all function declarations)
+  useEffect(() => {
+    setFunctionModel("models/gemini-2.0-flash-exp");
+    setFunctionConfig({
+      responseModalities: [Modality.TEXT], // TEXT only, no audio
+      systemInstruction: {
+        parts: [
+          {
+            text: `You are a silent assistant that ONLY calls functions when a child EXPLICITLY asks a question or makes a request.
+
+CRITICAL RULES - READ CAREFULLY:
+1. DO NOTHING until the child speaks and asks a clear question or makes a request
+2. NEVER call any function on startup, on connection, or when there's silence
+3. WAIT for actual spoken words from the child before doing anything
+4. If you only hear background noise, silence, or unclear audio - DO NOTHING
+5. You are SILENT - never output text responses, only call functions when needed
+
+WHEN TO ACT:
+- Child asks a question like "Why is the sky blue?" → Call generate_image with a relevant prompt, then show_media
+- Child asks for a cartoon/video → Call generate_video, then show_media
+- Child asks to see something on webcam → Call generate_video_from_webcam, then show_media
+- Child asks to hide the picture → Call hide_media
+
+WHEN TO DO NOTHING:
+- Connection just started (WAIT for the child to speak)
+- Only background noise or unclear audio
+- The child is just making sounds but not asking anything
+- The child is laughing or making non-verbal sounds
+
+Remember: Be PATIENT. Wait for a CLEAR question or request before calling any function.`,
           },
         ],
       },
       tools: [
-        // there is a free-tier quota for search
         { googleSearch: {} },
         {
           functionDeclarations: [
             declaration,
             generateVideoDeclaration,
-            generateNanoBananaDeclaration,
+            generateImageDeclaration,
             generateSpeechDeclaration,
             generateVideoFromWebcamDeclaration,
             showMediaDeclaration,
@@ -291,7 +369,7 @@ function AltairComponent() {
         },
       ],
     });
-  }, [setConfig, setModel]);
+  }, [setFunctionConfig, setFunctionModel]);
 
   // Initialize MediaClient
   useEffect(() => {
@@ -301,6 +379,7 @@ function AltairComponent() {
     }
   }, []);
 
+  // Handle tool calls from the FUNCTION model
   useEffect(() => {
     const onToolCall = async (toolCall: LiveServerToolCall) => {
       if (!toolCall.functionCalls) {
@@ -316,10 +395,10 @@ function AltairComponent() {
         setJSONString(str);
       }
 
-      // Process all function calls and wait for async operations to complete
+      // Process all function calls
       const functionResponses = await Promise.all(
         toolCall.functionCalls
-          .filter((fc) => fc.id) // Ensure id exists
+          .filter((fc) => fc.id)
           .map(async (fc) => {
             // Handle render_altair - immediate response
             if (fc.name === declaration.name) {
@@ -339,7 +418,6 @@ function AltairComponent() {
                 if (mediaType === "video" && lastGeneratedVideo) {
                   setIsLoadingMedia(true);
                   
-                  // Download video if we don't have a blob URL yet
                   let blobUrl = lastGeneratedVideo.blobUrl;
                   if (!blobUrl) {
                     blobUrl = await downloadVideoAsBlob(lastGeneratedVideo.uri, API_KEY);
@@ -353,6 +431,9 @@ function AltairComponent() {
                   });
                   setIsLoadingMedia(false);
                   
+                  // Notify speaking model
+                  notifySpeakingModel("The cartoon video is now displayed on screen! Describe it to the child and ask if they like it.");
+                  
                   return {
                     response: { output: { success: true, message: "Video is now displayed on screen." } },
                     id: fc.id!,
@@ -364,6 +445,9 @@ function AltairComponent() {
                     url: lastGeneratedImage,
                     visible: true,
                   });
+                  
+                  // Notify speaking model
+                  notifySpeakingModel("The picture is now displayed on screen! Describe it to the child and continue explaining.");
                   
                   return {
                     response: { output: { success: true, message: "Image is now displayed on screen." } },
@@ -390,6 +474,7 @@ function AltairComponent() {
             // Handle hide_media
             if (fc.name === hideMediaDeclaration.name) {
               setMediaDisplay(null);
+              notifySpeakingModel("The media has been hidden from the screen.");
               return {
                 response: { output: { success: true, message: "Media has been hidden from screen." } },
                 id: fc.id!,
@@ -400,7 +485,6 @@ function AltairComponent() {
             // For media client calls, track state and process async
             const requestId = `${fc.name}_${fc.id}_${Date.now()}`;
             
-            // Update state to pending (for UI/logging)
             setRequestStates((prev) => {
               const newMap = new Map(prev);
               newMap.set(requestId, {
@@ -414,23 +498,26 @@ function AltairComponent() {
             if (mediaClientRef.current) {
               try {
                 let result: any;
+                
                 if (fc.name === generateVideoDeclaration.name) {
                   const prompt = (fc.args as any).prompt;
                   const imageBase64Arg = (fc.args as any).imageBase64;
                   
-                  // Parse image data if provided
+                  // Notify speaking model that video generation started
+                  setIsGeneratingMedia(true);
+                  setGeneratingMediaType("video");
+                  notifySpeakingModel("I'm now creating a special cartoon video for you! This will take a moment, so let me tell you more while we wait...");
+                  
                   let imageBase64: string | undefined;
                   let imageMimeType: string | undefined;
                   
                   if (imageBase64Arg) {
-                    // Handle data URI format: "data:image/jpeg;base64,..." or just base64 string
                     if (imageBase64Arg.startsWith("data:")) {
                       const matches = imageBase64Arg.match(/^data:([^;]+);base64,(.+)$/);
                       if (matches) {
                         imageMimeType = matches[1];
                         imageBase64 = matches[2];
                       } else {
-                        // Fallback: try to extract from any data URI format
                         const commaIndex = imageBase64Arg.indexOf(",");
                         if (commaIndex > 0) {
                           const header = imageBase64Arg.substring(0, commaIndex);
@@ -442,7 +529,6 @@ function AltairComponent() {
                         }
                       }
                     } else {
-                      // Assume it's just base64 data, default to jpeg
                       imageBase64 = imageBase64Arg;
                       imageMimeType = "image/jpeg";
                     }
@@ -456,16 +542,20 @@ function AltairComponent() {
                     API_KEY
                   );
                   
-                  // Log the video URL when ready and store for display
                   if (result?.uri) {
-                    console.log("Video generation complete! Video URL:", result.url);
-                    console.log("Video URI:", result.uri);
+                    console.log("Video generation complete! Video URI:", result.uri);
                     setLastGeneratedVideo({ uri: result.uri, blobUrl: undefined });
+                    setIsGeneratingMedia(false);
+                    setGeneratingMediaType(null);
+                    notifySpeakingModel("Wonderful news! The cartoon video is ready! Let me show it to you!");
                   }
                 } else if (fc.name === generateVideoFromWebcamDeclaration.name) {
                   const prompt = (fc.args as any).prompt;
                   
-                  // Capture frame from webcam
+                  setIsGeneratingMedia(true);
+                  setGeneratingMediaType("video");
+                  notifySpeakingModel("I'm creating a special cartoon from what you're showing me! This is so exciting! While we wait, let me tell you about what makes this so cool...");
+                  
                   const frameDataURI = captureFrameFromWebcam();
                   
                   if (!frameDataURI) {
@@ -474,7 +564,6 @@ function AltairComponent() {
                     );
                   }
                   
-                  // Parse the data URI to extract base64 and mime type
                   let imageBase64: string;
                   let imageMimeType: string = "image/jpeg";
                   
@@ -484,7 +573,6 @@ function AltairComponent() {
                       imageMimeType = matches[1];
                       imageBase64 = matches[2];
                     } else {
-                      // Fallback: extract base64 after comma
                       const commaIndex = frameDataURI.indexOf(",");
                       if (commaIndex > 0) {
                         const header = frameDataURI.substring(0, commaIndex);
@@ -509,30 +597,35 @@ function AltairComponent() {
                     API_KEY
                   );
                   
-                  // Log the video URL when ready and store for display
                   if (result?.uri) {
-                    console.log("Video generation from webcam complete! Video URL:", result.url);
-                    console.log("Video URI:", result.uri);
+                    console.log("Video generation from webcam complete! Video URI:", result.uri);
                     setLastGeneratedVideo({ uri: result.uri, blobUrl: undefined });
+                    setIsGeneratingMedia(false);
+                    setGeneratingMediaType(null);
+                    notifySpeakingModel("Amazing! Your personalized cartoon is ready! I'm so excited to show you!");
                   }
-                } else if (fc.name === generateNanoBananaDeclaration.name) {
+                } else if (fc.name === generateImageDeclaration.name) {
                   const prompt = (fc.args as any).prompt;
-                  result = await mediaClientRef.current.generateNanoBanana(
-                    prompt
-                  );
                   
-                  // Parse and store the generated image
+                  setIsGeneratingMedia(true);
+                  setGeneratingMediaType("image");
+                  notifySpeakingModel("I'm drawing a special picture for you right now! It'll be ready in just a moment...");
+                  
+                  result = await mediaClientRef.current.generateImage(prompt);
+                  
                   const imageDataUri = parseImageResponse(result);
                   if (imageDataUri) {
                     console.log("Image generation complete!");
                     setLastGeneratedImage(imageDataUri);
+                    setIsGeneratingMedia(false);
+                    setGeneratingMediaType(null);
+                    notifySpeakingModel("The picture is ready! Let me show it to you!");
                   }
                 } else if (fc.name === generateSpeechDeclaration.name) {
                   const text = (fc.args as any).text;
                   result = await mediaClientRef.current.generateSpeech(text);
                 }
 
-                // Update state to ready
                 setRequestStates((prev) => {
                   const newMap = new Map(prev);
                   newMap.set(requestId, {
@@ -543,14 +636,12 @@ function AltairComponent() {
                   return newMap;
                 });
 
-                // Return response with ready status (without result data to keep response small)
                 let message = "Request completed successfully";
                 if (
                   (fc.name === generateVideoDeclaration.name ||
                     fc.name === generateVideoFromWebcamDeclaration.name) &&
                   result?.url
                 ) {
-                  // Include URL in message for video generation
                   message = `Video generation complete. URL: ${result.url}`;
                 }
                 
@@ -566,7 +657,9 @@ function AltairComponent() {
                   name: fc.name,
                 };
               } catch (error: any) {
-                // Update state to error
+                setIsGeneratingMedia(false);
+                setGeneratingMediaType(null);
+                
                 setRequestStates((prev) => {
                   const newMap = new Map(prev);
                   newMap.set(requestId, {
@@ -577,7 +670,8 @@ function AltairComponent() {
                   return newMap;
                 });
 
-                // Return error response
+                notifySpeakingModel(`Oops! Something went wrong while creating the media: ${error?.message || "Unknown error"}. But don't worry, let me continue explaining!`);
+
                 return {
                   response: {
                     output: {
@@ -593,7 +687,6 @@ function AltairComponent() {
               }
             }
 
-            // Fallback for non-media-client calls
             return {
               response: {
                 output: {
@@ -609,17 +702,17 @@ function AltairComponent() {
           })
       );
 
-      // Send all responses after async operations complete
-      client.sendToolResponse({
+      // Send responses back to the FUNCTION model
+      functionClient.sendToolResponse({
         functionResponses,
       });
     };
 
-    client.on("toolcall", onToolCall);
+    functionClient.on("toolcall", onToolCall);
     return () => {
-      client.off("toolcall", onToolCall);
+      functionClient.off("toolcall", onToolCall);
     };
-  }, [client, lastGeneratedVideo, lastGeneratedImage]);
+  }, [functionClient, lastGeneratedVideo, lastGeneratedImage, notifySpeakingModel]);
 
   const embedRef = useRef<HTMLDivElement>(null);
 
@@ -643,7 +736,15 @@ function AltairComponent() {
     <div className="altair-container">
       <div className="vega-embed" ref={embedRef} />
       
-      {/* Media Display Area */}
+      {/* Media Generation Status Indicator */}
+      {isGeneratingMedia && (
+        <div className="media-generating-indicator">
+          <div className="generating-spinner" />
+          <span>Creating {generatingMediaType === "video" ? "cartoon" : "picture"}...</span>
+        </div>
+      )}
+      
+      {/* Media Loading Indicator */}
       {isLoadingMedia && (
         <div className="media-loading">
           <div className="loading-spinner" />

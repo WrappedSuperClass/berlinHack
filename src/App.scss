@@ -1,63 +1,103 @@
+/* ✨ Magical Fairytale Theme for Children ✨ */
+
 :root {
-  --text: white;
-  --gray-200: #b4b8bb;
-  --gray-300: #80868b;
-  --gray-500: #5f6368;
-  --gray-600: #444444;
-  --gray-700: #202020;
-  --gray-800: #171717;
-  --gray-900: #111111;
-  --gray-1000: #0a0a0a;
-  --border-stroke: #444444;
-  --accent-blue: rgb(161, 228, 242);
-  --accent-blue-active-bg: #001233;
-  --accent-blue-active: #98beff;
-  --accent-blue-headers: #448dff;
-  --accent-green: rgb(168, 218, 181);
-
-  --midnight-blue: rgb(0, 18, 51);
-  --blue-30: #99beff;
-
-  --accent-red: #ff4600;
-
-  --background: var(--gray-900);
-  --color: var(--text);
-
-  scrollbar-color: var(--gray-600) var(--gray-900);
+  /* Dreamy Pastel Colors */
+  --fairy-pink: #FFB6C1;
+  --fairy-pink-light: #FFC8D7;
+  --fairy-pink-dark: #E8A0AB;
+  --fairy-lavender: #E6E6FA;
+  --fairy-lavender-dark: #C5C5E8;
+  --fairy-mint: #98FF98;
+  --fairy-mint-light: #B8FFB8;
+  --fairy-sky: #87CEEB;
+  --fairy-sky-light: #B0E2FF;
+  --fairy-peach: #FFDAB9;
+  --fairy-gold: #FFD700;
+  --fairy-coral: #FF7F7F;
+  --fairy-purple: #DDA0DD;
+  --fairy-purple-dark: #BA55D3;
+  --fairy-cream: #FFFAF0;
+  --fairy-cloud: #F0F8FF;
+  
+  /* Magic Gradients */
+  --rainbow-gradient: linear-gradient(135deg, #FF9AA2 0%, #FFB7B2 15%, #FFDAC1 30%, #E2F0CB 45%, #B5EAD7 60%, #C7CEEA 75%, #DDA0DD 90%);
+  --sky-gradient: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #FFF0F5 100%);
+  --sunset-gradient: linear-gradient(135deg, #FFB6C1 0%, #DDA0DD 50%, #87CEEB 100%);
+  --cloud-gradient: linear-gradient(180deg, #FFFFFF 0%, #F0F8FF 100%);
+  
+  /* Text Colors */
+  --text-primary: #6B4C7A;
+  --text-secondary: #8B6B9B;
+  --text-light: #A88BB8;
+  --text-white: #FFFFFF;
+  
+  /* UI Colors */
+  --button-magic: linear-gradient(135deg, #FF9AA2 0%, #FFB7B2 50%, #FFDAC1 100%);
+  --button-fairy: linear-gradient(135deg, #DDA0DD 0%, #BA55D3 100%);
+  --button-dream: linear-gradient(135deg, #87CEEB 0%, #B0E2FF 100%);
+  --button-success: linear-gradient(135deg, #98FF98 0%, #7CCD7C 100%);
+  --button-danger: linear-gradient(135deg, #FF7F7F 0%, #FF6B6B 100%);
+  
+  /* Shadows */
+  --shadow-fairy: 0 4px 20px rgba(255, 182, 193, 0.4);
+  --shadow-cloud: 0 8px 32px rgba(135, 206, 235, 0.3);
+  --shadow-magic: 0 0 30px rgba(221, 160, 221, 0.5);
+  
+  /* Borders */
+  --border-sparkle: 2px solid rgba(255, 215, 0, 0.5);
+  --border-cloud: 2px solid rgba(255, 255, 255, 0.6);
+  
+  /* Font Family */
+  --font-family: "Fredoka", "Bubblegum Sans", cursive;
+  --font-family-handwritten: "Patrick Hand", cursive;
+  
+  /* Scrollbar */
+  scrollbar-color: var(--fairy-pink) var(--fairy-lavender);
   scrollbar-width: thin;
+}
 
-  --font-family: "Space Mono", monospace;
+/* Sparkle Animation Keyframes */
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
 
-  /* */
-  --Neutral-00: #000;
-  --Neutral-5: #181a1b;
-  --Neutral-10: #1c1f21;
-  --Neutral-15: #232729;
-  --Neutral-20: #2a2f31;
-  --Neutral-30: #404547;
-  --Neutral-50: #707577;
-  --Neutral-60: #888d8f;
-  --Neutral-80: #c3c6c7;
-  --Neutral-90: #e1e2e3;
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
 
-  --Green-500: #0d9c53;
-  --Green-700: #025022;
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
 
-  --Blue-400: #80c1ff;
-  --Blue-500: #1f94ff;
-  --Blue-800: #0f3557;
+@keyframes rainbow-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
-  --Red-400: #ff9c7a;
-  --Red-500: #ff4600;
-  --Red-600: #e03c00;
-  --Red-700: #bd3000;
+@keyframes cloud-drift {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100vw); }
+}
+
+@keyframes star-fall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(10px) rotate(360deg); opacity: 0; }
 }
 
 body {
-  font-family: "Space Mono", monospace;
-  background: var(--Neutral-30);
+  font-family: var(--font-family);
+  background: var(--sky-gradient);
+  margin: 0;
+  overflow: hidden;
+  min-height: 100vh;
 }
 
+/* Material Icons Styling */
 .material-symbols-outlined {
   &.filled {
     font-variation-settings:
@@ -66,30 +106,6 @@ body {
       "GRAD" 0,
       "opsz" 24;
   }
-}
-
-.space-mono-regular {
-  font-family: "Space Mono", monospace;
-  font-weight: 400;
-  font-style: normal;
-}
-
-.space-mono-bold {
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
-  font-style: normal;
-}
-
-.space-mono-regular-italic {
-  font-family: "Space Mono", monospace;
-  font-weight: 400;
-  font-style: italic;
-}
-
-.space-mono-bold-italic {
-  font-family: "Space Mono", monospace;
-  font-weight: 700;
-  font-style: italic;
 }
 
 .hidden {
@@ -112,24 +128,60 @@ body {
   flex-direction: column;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-}
-
+/* Main Streaming Console - The Magical Kingdom! */
 .streaming-console {
-  background: var(--Neutral-15);
-  color: var(--gray-300);
+  position: relative;
   display: flex;
   height: 100vh;
   width: 100vw;
+  overflow: hidden;
+  
+  /* Dreamy Sky Background */
+  background: 
+    radial-gradient(ellipse at 20% 80%, rgba(255, 182, 193, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(221, 160, 221, 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(135, 206, 235, 0.2) 0%, transparent 70%),
+    linear-gradient(180deg, #87CEEB 0%, #C5E8F7 30%, #E8F4FC 60%, #FFF0F5 100%);
+  
+  color: var(--text-primary);
+
+  /* Floating Clouds Layer */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(ellipse 120px 60px at 10% 15%, rgba(255, 255, 255, 0.9) 0%, transparent 70%),
+      radial-gradient(ellipse 100px 50px at 30% 25%, rgba(255, 255, 255, 0.8) 0%, transparent 70%),
+      radial-gradient(ellipse 80px 40px at 70% 10%, rgba(255, 255, 255, 0.85) 0%, transparent 70%),
+      radial-gradient(ellipse 140px 70px at 85% 20%, rgba(255, 255, 255, 0.75) 0%, transparent 70%),
+      radial-gradient(ellipse 90px 45px at 55% 35%, rgba(255, 255, 255, 0.7) 0%, transparent 70%);
+    pointer-events: none;
+    animation: float 8s ease-in-out infinite;
+    z-index: 0;
+  }
+  
 
   a,
   a:visited,
   a:active {
-    color: var(--gray-300);
+    color: var(--fairy-purple-dark);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      color: var(--fairy-coral);
+      text-shadow: 0 0 10px rgba(255, 127, 127, 0.5);
+    }
   }
 
   .disabled {
     pointer-events: none;
+    opacity: 0.5;
 
     > * {
       pointer-events: none;
@@ -143,9 +195,11 @@ body {
     align-items: center;
     justify-content: center;
     flex-grow: 1;
-    gap: 1rem;
+    gap: 1.5rem;
     max-width: 100%;
     overflow: hidden;
+    z-index: 1;
+    padding: 20px;
   }
 
   .main-app-area {
@@ -153,6 +207,23 @@ body {
     flex: 1;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    position: relative;
+    
+    /* Magical glow around the main area */
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80%;
+      height: 80%;
+      background: radial-gradient(ellipse, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+      border-radius: 50%;
+      animation: float 6s ease-in-out infinite;
+    }
   }
 
   .function-call {
@@ -164,10 +235,108 @@ body {
   }
 }
 
-/* video player */
+/* Video Player - Magic Mirror Style! */
 .stream {
   flex-grow: 1;
-  max-width: 90%;
-  border-radius: 32px;
+  max-width: 85%;
+  border-radius: 40px;
   max-height: fit-content;
+  box-shadow: 
+    0 0 0 4px rgba(255, 215, 0, 0.4),
+    0 0 0 8px rgba(221, 160, 221, 0.3),
+    0 10px 40px rgba(186, 85, 211, 0.3),
+    inset 0 0 60px rgba(255, 255, 255, 0.1);
+  border: 3px solid rgba(255, 255, 255, 0.6);
+  animation: float 4s ease-in-out infinite;
+  
+  /* Magic mirror glow */
+  &::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border-radius: 50px;
+    background: linear-gradient(135deg, rgba(255, 182, 193, 0.2), rgba(221, 160, 221, 0.2), rgba(135, 206, 235, 0.2));
+    z-index: -1;
+    animation: rainbow-shift 5s ease infinite;
+    background-size: 200% 200%;
+  }
+}
+
+/* Custom Scrollbar - Rainbow Trail! */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, var(--fairy-lavender) 0%, var(--fairy-sky-light) 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--rainbow-gradient);
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background-size: 200% 200%;
+  animation: rainbow-shift 3s ease infinite;
+  
+  &:hover {
+    background: var(--button-fairy);
+  }
+}
+
+/* Selection Color */
+::selection {
+  background: var(--fairy-pink);
+  color: var(--text-primary);
+}
+
+/* Focus Styles */
+*:focus {
+  outline: 3px solid var(--fairy-gold);
+  outline-offset: 2px;
+}
+
+/* Buttons Base Style */
+button {
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Input Fields */
+input, textarea {
+  font-family: var(--font-family);
+  border: 2px solid var(--fairy-lavender-dark);
+  border-radius: 20px;
+  padding: 12px 18px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  
+  &:focus {
+    border-color: var(--fairy-pink);
+    box-shadow: 0 0 20px rgba(255, 182, 193, 0.4);
+    outline: none;
+  }
+  
+  &::placeholder {
+    color: var(--text-light);
+  }
+}
+
+/* Tooltips */
+[title] {
+  position: relative;
 }
